@@ -12665,6 +12665,21 @@ function guardarFicheiroRobusto(blob,nome,mensagem){
 }
 
 function baixarComLink(blob,nome,mensagem){
+  // Ponte para Kodular: envia o conteúdo CSV ao WebViewer para o componente File guardar.
+  // No Kodular, o evento Web View String Change recebe este texto em "value".
+  if (/\.csv$/i.test(String(nome||'')) && window.Kodular && typeof window.Kodular.setWebViewString === "function") {
+    try {
+      const reader = new FileReader();
+      reader.onload = function(){
+        try { window.Kodular.setWebViewString(String(reader.result || "")); }
+        catch (e) { console.error("Não foi possível enviar o CSV ao Kodular", e); }
+      };
+      reader.onerror = function(){ console.error("Não foi possível ler o CSV para enviar ao Kodular."); };
+      reader.readAsText(blob, "UTF-8");
+      if(typeof showSchoolToast==="function") showSchoolToast("A enviar o CSV para guardar no dispositivo…");
+      return;
+    } catch(e) { console.error("Falha na ponte CSV do Kodular", e); }
+  }
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
   a.href=url;
